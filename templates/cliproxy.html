@@ -558,6 +558,16 @@
                 padding: 20px 16px 32px;
             }
 
+            .settings-drawer .form-row {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 12px;
+            }
+
+            #auto-tab .drawer-section > div[style*="justify-content: space-between"] {
+                flex-direction: row !important;
+                align-items: center !important;
+            }
+
             .background-task-bar {
                 right: 16px;
                 left: 16px;
@@ -569,6 +579,10 @@
         @media (max-width: 480px) {
             .scan-trigger-bar {
                 grid-template-columns: 1fr !important;
+            }
+
+            .settings-drawer .form-row {
+                grid-template-columns: 1fr;
             }
 
             .filter-group {
@@ -864,7 +878,7 @@
                             <label>紧急防御</label>
                             <p
                                 style="text-align: left; font-size: 11px; color: var(--text-muted); margin-top: 8px; margin-bottom: 8px;">
-                                开启后，当就绪账号占比过低时，自动清理并重试。
+                                开启后，当就绪账号占比过低时，不进行清理并稍后重试。
                             </p>
                             <label class="switch-btn">
                                 <input type="checkbox" name="emergency_defense" id="patrol-emergency-toggle"
@@ -909,7 +923,7 @@
                         <div class="form-group">
                             <label>巡检模式</label>
                             <select name="mode">
-                                <option value="all">全量 (401 + 额度)</option>
+                                <option value="all">401 + 额度</option>
                                 <option value="401">仅测 401</option>
                             </select>
                         </div>
@@ -923,16 +937,16 @@
                         <div class="form-group">
                             <label>401 失败动作</label>
                             <select name="action_401">
-                                <option value="none">忽略 (仅记录状态)</option>
-                                <option value="delete">删除 (从平台移除并标记无效)</option>
+                                <option value="none">忽略</option>
+                                <option value="delete">删除</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label>额度耗尽动作</label>
                             <select name="action_quota">
-                                <option value="none">忽略 (仅记录状态)</option>
-                                <option value="close">自动关闭 (仅在平台关闭)</option>
-                                <option value="delete">删除 (从平台移除并标记无效)</option>
+                                <option value="none">忽略</option>
+                                <option value="close">自动关闭</option>
+                                <option value="delete">删除</option>
                             </select>
                         </div>
                     </div>

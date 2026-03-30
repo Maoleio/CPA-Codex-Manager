@@ -738,24 +738,12 @@ class AutoPatrolManager:
                     total_scanned = sum_data.get("total", 0)
                     ready_count = sum_data.get("ready", 0)
 
-                    # 逻辑：如果就绪比例少于阈值，随机清理一半并冷却后重试
+                    # 逻辑：如果就绪比例少于阈值，则跳过本轮清理并冷却后重试
                     threshold = getattr(config, 'emergency_threshold', 0.5)
                     cooldown = getattr(config, 'emergency_cooldown_minutes', 5)
                     if config.emergency_defense and total_scanned > 0 and (ready_count / total_scanned) < threshold:
-                        msg = f"检测到有效账号占比过低 ({ready_count}/{total_scanned} < {int(threshold * 100)}%)，触发紧急防御: 随机半量清理"
+                        msg = f"检测到有效账号占比过低 ({ready_count}/{total_scanned} < {int(threshold * 100)}%)，触发紧急防御: 本轮跳过清理，{cooldown} 分钟后重试"
                         logger.warning(msg)
-                        all_names = [r["name"] for r in results]
-                        import random
-                        names_to_delete = random.sample(all_names, len(all_names) // 2)
-                        if names_to_delete:
-                            action_batch_id = _new_batch_id("auto_action_emergency")
-                            task_manager.init_batch(action_batch_id, total=len(names_to_delete))
-                            task_manager.update_batch_status(action_batch_id, mode="cliproxy_action", monitor_visible=False)
-                            await perform_action(action_batch_id, ActionRequest(
-                                service_id=service_id,
-                                action="delete",
-                                names=names_to_delete
-                            ))
                         
                         # 记录紧急防御到历史
                         history = self._history_by_service.setdefault(service_id, [])
@@ -764,16 +752,19 @@ class AutoPatrolManager:
                             "service_name": service_name,
                             "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                             "total": total_scanned,
+                            "ready": ready_count,
                             "invalid_401": sum_data.get("invalid_401", 0),
                             "invalid_quota": sum_data.get("invalid_quota", 0),
                             "errors": sum_data.get("errors", 0),
-                            "cleared": len(names_to_delete),
+                            "cleared": 0,
+                            "threshold": threshold,
+                            "cooldown_minutes": cooldown,
                             "emergency": True
                         })
                         if len(history) > 50: history.pop()
                         self._save()
 
-                        logger.info(f"[{service_name}] 自动检测扫描异常结束 | 有效: {ready_count}, 异常触发: 紧急防御已清理半量并将在 {cooldown} 分钟后重新检测")
+                        logger.info(f"[{service_name}] 自动检测扫描异常结束 | 有效: {ready_count}, 异常触发: 紧急防御未执行清理，将在 {cooldown} 分钟后重新检测")
                         self._status_map[service_id] = "idle"
                         await asyncio.sleep(cooldown * 60)
                         continue

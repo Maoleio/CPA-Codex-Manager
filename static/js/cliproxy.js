@@ -613,7 +613,9 @@ document.addEventListener('DOMContentLoaded', () => {
             container.innerHTML = history.map(item => {
                 let statusInfo = '';
                 if (item.emergency) {
-                    statusInfo = `<span class="notif-stats" style="color: #FF9500;">触发紧急防御 | 有效: ${item.total - item.cleared}, 已随机清理: ${item.cleared}</span>`;
+                    const readyCount = item.ready ?? Math.max(0, (item.total || 0) - (item.invalid_401 || 0) - (item.invalid_quota || 0) - (item.errors || 0));
+                    const cooldown = item.cooldown_minutes || 5;
+                    statusInfo = `<span class="notif-stats" style="color: #FF9500;">触发紧急防御 | 本轮未清理 | 就绪: ${readyCount}/${item.total || 0} | 将在 ${cooldown} 分钟后重试</span>`;
                 } else {
                     statusInfo = `
                         <span class="notif-stats">
